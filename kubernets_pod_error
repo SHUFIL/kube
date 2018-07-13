@@ -1,0 +1,241 @@
+<ubuntu@kube-server:~$ kubectl get pod
+NAME                                 READY     STATUS             RESTARTS   AGE
+es-data-0                            0/1       CrashLoopBackOff   9          23m
+mongo-deployment-79b86dbbdc-jk9b9    1/1       Running            0          3d
+mongo-deployment1-74d644687d-2px4l   1/1       Running            0          3d
+ubuntu@kube-server:~$ kubectl get statefulsets.apps
+NAME      DESIRED   CURRENT   AGE
+es-data   1         1         23m
+ubuntu@kube-server:~$ kubectl get pv
+NAME             CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS    CLAIM                              STORAGECLASS   REASON    AGE
+task-pv-volume   10Gi       RWO            Retain           Bound     default/task-pv-volume-es-data-0   rbd                      1h
+ubuntu@kube-server:~$ kubectl get storageclass
+NAME      PROVISIONER                    AGE
+rbd       kubernetes.io/no-provisioner   1h
+
+ubuntu@kube-server:~$ kubectl describe pod es-data-0
+Name:           es-data-0
+Namespace:      default
+Node:           node1/192.168.1.101
+Start Time:     Fri, 13 Jul 2018 23:35:11 +0530
+Labels:         component=elasticsearch
+                controller-revision-hash=es-data-84885c7dc4
+                role=data
+                statefulset.kubernetes.io/pod-name=es-data-0
+Annotations:    <none>
+Status:         Running
+IP:             10.244.1.9
+Controlled By:  StatefulSet/es-data
+Init Containers:
+  init-sysctl:
+    Container ID:  docker://81616146611d8c6f2fbfa2a1e590d14e218dcfb9527d3a124de4091fea8a2245
+    Image:         busybox:1.27.2
+    Image ID:      docker-pullable://busybox@sha256:bbc3a03235220b170ba48a157dd097dd1379299370e1ed99ce976df0355d24f0
+    Port:          <none>
+    Host Port:     <none>
+    Command:
+      sysctl
+      -w
+      vm.max_map_count=262144
+    State:          Terminated
+      Reason:       Completed
+      Exit Code:    0
+      Started:      Fri, 13 Jul 2018 23:35:22 +0530
+      Finished:     Fri, 13 Jul 2018 23:35:22 +0530
+    Ready:          True
+    Restart Count:  0
+    Environment:    <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from default-token-6vhb4 (ro)
+Containers:
+  es-data:
+    Container ID:   docker://4ed5b60c136c891c4bd08744ce5fd206c2ee9cc3d2ea817ed1cbc09e5bde027e
+    Image:          quay.io/pires/docker-elasticsearch-kubernetes:6.3.0
+    Image ID:       docker-pullable://quay.io/pires/docker-elasticsearch-kubernetes@sha256:dcd3e9db3d2c6b9a448d135aebcacac30a4cca655d42efaa115aa57405cd22f3
+    Ports:          9200/TCP, 9300/TCP
+    Host Ports:     0/TCP, 0/TCP
+    State:          Waiting
+      Reason:       CrashLoopBackOff
+    Last State:     Terminated
+      Reason:       Error
+      Exit Code:    143
+      Started:      Fri, 13 Jul 2018 23:41:24 +0530
+      Finished:     Fri, 13 Jul 2018 23:42:13 +0530
+    Ready:          False
+    Restart Count:  5
+    Limits:
+      cpu:  1
+    Requests:
+      cpu:      250m
+    Liveness:   tcp-socket :transport delay=20s timeout=1s period=10s #success=1 #failure=3
+    Readiness:  http-get http://:http/_cluster/health delay=20s timeout=5s period=10s #success=1 #failure=3
+    Environment:
+      NAMESPACE:     default (v1:metadata.namespace)
+      NODE_NAME:     es-data-0 (v1:metadata.name)
+      CLUSTER_NAME:  myesdb
+      NODE_MASTER:   false
+      NODE_INGEST:   false
+      HTTP_ENABLE:   true
+      ES_JAVA_OPTS:  -Xms256m -Xmx256m
+      PROCESSORS:    1 (limits.cpu)
+    Mounts:
+      /elastic from task-pv-volume (rw)
+      /var/run/secrets/kubernetes.io/serviceaccount from default-token-6vhb4 (ro)
+Conditions:
+  Type              Status
+  Initialized       True
+  Ready             False
+  ContainersReady   False
+  PodScheduled      True
+Volumes:
+  task-pv-volume:
+    Type:       PersistentVolumeClaim (a reference to a PersistentVolumeClaim in the same namespace)
+    ClaimName:  task-pv-volume-es-data-0
+    ReadOnly:   false
+  default-token-6vhb4:
+    Type:        Secret (a volume populated by a Secret)
+    SecretName:  default-token-6vhb4
+    Optional:    false
+QoS Class:       Burstable
+Node-Selectors:  <none>
+Tolerations:     node.kubernetes.io/not-ready:NoExecute for 300s
+                 node.kubernetes.io/unreachable:NoExecute for 300s
+Events:
+  Type     Reason     Age               From               Message
+  ----     ------     ----              ----               -------
+  Normal   Scheduled  7m                default-scheduler  Successfully assigned default/es-data-0 to node1
+  Normal   Pulling    7m                kubelet, node1     pulling image "busybox:1.27.2"
+  Normal   Pulled     7m                kubelet, node1     Successfully pulled image "busybox:1.27.2"
+  Normal   Created    7m                kubelet, node1     Created container
+  Normal   Started    7m                kubelet, node1     Started container
+  Normal   Pulling    7m                kubelet, node1     pulling image "quay.io/pires/docker-elasticsearch-kubernetes:6.3.0"
+  Normal   Pulled     5m                kubelet, node1     Successfully pulled image "quay.io/pires/docker-elasticsearch-kubernetes:6.3.0"
+  Normal   Created    4m (x2 over 5m)   kubelet, node1     Created container
+  Normal   Started    4m (x2 over 5m)   kubelet, node1     Started container
+  Normal   Pulled     4m                kubelet, node1     Container image "quay.io/pires/docker-elasticsearch-kubernetes:6.3.0" already present on machine
+  Warning  Unhealthy  4m (x6 over 5m)   kubelet, node1     Liveness probe failed: dial tcp 10.244.1.9:9300: connect: connection refused
+  Normal   Killing    4m (x2 over 4m)   kubelet, node1     Killing container with id docker://es-data:Container failed liveness probe.. Container will be killed and recreated.
+  Warning  Unhealthy  2m (x11 over 5m)  kubelet, node1     Readiness probe failed: Get http://10.244.1.9:9200/_cluster/health: dial tcp 10.244.1.9:9200: connect: connection refused
+ubuntu@kube-server:~$ kubectl get pv
+NAME             CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS    CLAIM                              STORAGECLASS   REASON    AGE
+task-pv-volume   10Gi       RWO            Retain           Bound     default/task-pv-volume-es-data-0   rbd                      1h
+ubuntu@kube-server:~$
+#storageclass.yaml file
+______________________________
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: rbd
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+___________________________________
+#PersistentVolume.yaml file
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: task-pv-volume
+  labels:
+    type: local
+spec:
+  storageClassName: rbd
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data"
+____________________________
+#elastic_search.yaml file
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: es-data
+  labels:
+    component: elasticsearch
+    role: data
+spec:
+  serviceName: elasticsearch-data
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        component: elasticsearch
+        role: data
+    spec:
+      initContainers:
+      - name: init-sysctl
+        image: busybox:1.27.2
+        command:
+        - sysctl
+        - -w
+        - vm.max_map_count=262144
+        securityContext:
+          privileged: true
+      containers:
+      - name: es-data
+        image: quay.io/pires/docker-elasticsearch-kubernetes:6.3.0
+        env:
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: CLUSTER_NAME
+          value: myesdb
+        - name: NODE_MASTER
+          value: "false"
+        - name: NODE_INGEST
+value: "false"
+        - name: HTTP_ENABLE
+          value: "true"
+        - name: ES_JAVA_OPTS
+          value: -Xms256m -Xmx256m
+        - name: PROCESSORS
+          valueFrom:
+            resourceFieldRef:
+              resource: limits.cpu
+        resources:
+          requests:
+            cpu: 0.25
+          limits:
+            cpu: 1
+        ports:
+        - containerPort: 9200
+          name: http
+        - containerPort: 9300
+          name: transport
+        livenessProbe:
+          tcpSocket:
+            port: transport
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /_cluster/health
+            port: http
+          initialDelaySeconds: 20
+          timeoutSeconds: 5
+        volumeMounts:
+        - mountPath: /elastic
+          name: task-pv-volume
+      restartPolicy: Always
+  volumeClaimTemplates:
+  - metadata:
+      name: task-pv-volume
+    spec:
+      accessModes:
+      - ReadWriteOnce
+storageClassName: rbd
+      resources:
+        requests:
+          storage: 10Gi
+______________________________
+
+
+
+
+
+>
